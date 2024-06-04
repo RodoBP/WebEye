@@ -6,6 +6,9 @@ function WebEyeAnimation() {
     const colors = ['#0043FF', '#005FFF', '#007BFF', '#0097FF', '#00B3FF', '#00CFFF'];
     const container = document.getElementById('webeye-animation');
 
+    // Limpiar el contenedor antes de añadir los elementos
+    container.innerHTML = '';
+
     text.split('').forEach((letter, i) => {
       const span = document.createElement('span');
       span.style.opacity = '0';

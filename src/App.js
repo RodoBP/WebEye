@@ -30,7 +30,6 @@ function App() {
   return (
     <div className="container mx-auto p-4">
       <WebEyeAnimation />
-      <h1 className="text-2xl font-bold text-center mb-4">WebEye</h1>
       <ImageUploader onImageUpload={handleImageUpload} />
       <AnalyzeButton onClick={handleAnalyze} />
       <AnalysisOutput analysis={analysis} />
