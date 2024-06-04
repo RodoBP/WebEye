@@ -6,6 +6,10 @@ import FeedbackButton from './components/FeedbackButton';
 import AnalysisOutput from './components/AnalysisOutput';
 import FeedbackResponse from './components/FeedbackResponse';
 import WebEyeAnimation from './components/WebEyeAnimation';
+import Footer from './components/Footer';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 function App() {
   const [image, setImage] = useState(null);
@@ -28,20 +32,35 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <WebEyeAnimation />
-      <ImageUploader onImageUpload={handleImageUpload} />
-      <AnalyzeButton onClick={handleAnalyze} />
-      <AnalysisOutput analysis={analysis} />
-      <div className="flex justify-around mt-4">
-        <DownloadButton text="Download as TXT" fileType="TXT" disabled={!downloadEnabled} />
-        <DownloadButton text="Download as PDF" fileType="PDF" disabled={!downloadEnabled} />
+    <div className="container mx-auto p-4" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div style={{ flex: 1 }}>
+        <WebEyeAnimation />
+        <Container className='text-center'>
+          <Row >
+            <Col sm={10}>
+              <ImageUploader onImageUpload={handleImageUpload} />
+            </Col>
+            <Col sm={2}>
+              <AnalyzeButton onClick={handleAnalyze} />
+            </Col>
+          </Row>
+        </Container>
+        <AnalysisOutput analysis={analysis} />
+        <Container className='text-center'>
+          <Row>
+            <Col><DownloadButton text="Download as TXT" fileType="TXT" disabled={!downloadEnabled} /></Col>
+            <Col><DownloadButton text="Download as PDF" fileType="PDF" disabled={!downloadEnabled} /></Col>
+          </Row>
+          <Row>
+            <Col><FeedbackButton text="Good Response" onClick={() => handleFeedback('Good Response')} /></Col>
+            <Col><FeedbackButton text="Bad Response" onClick={() => handleFeedback('Bad Response')} /></Col>
+          </Row>
+        </Container>
+        <FeedbackResponse feedback={feedback} />
       </div>
-      <div className="flex justify-around mt-4">
-        <FeedbackButton text="Good Response" onClick={() => handleFeedback('Good Response')} />
-        <FeedbackButton text="Bad Response" onClick={() => handleFeedback('Bad Response')} />
+      <div>
+        <Footer />
       </div>
-      <FeedbackResponse feedback={feedback} />
     </div>
   );
 }
