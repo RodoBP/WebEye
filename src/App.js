@@ -18,7 +18,8 @@ function App() {
   const [analysis, setAnalysis] = useState('');
   const [feedback, setFeedback] = useState('');
   const [downloadEnabled, setDownloadEnabled] = useState(false);
-  const [analysisAvailable, setAnalysisAvailable] = useState(false);
+  const [feedbackEnabled, setfeedbackEnabled] = useState(false);
+  const [analysisEnabled, setAnalysisEnabled] = useState(false);
 
   const handleImageUpload = (file) => {
     setImage(file);
@@ -35,8 +36,11 @@ function App() {
   };
 
   useEffect(() => {
+    if (image && !analysis && !feedback) {
+      setAnalysisEnabled(true);
+    }
     if (image && analysis && !feedback) {
-      setAnalysisAvailable(true);
+      setfeedbackEnabled(true);
     }
     if (image && analysis && feedback) {
       setDownloadEnabled(true);
@@ -67,11 +71,11 @@ function App() {
         {/* Handle Image Uploader and Analyze Button */}
         <Container className='text-center'>
           <Row >
-            <Col sm={10}>
+            <Col sm={12}>
               <ImageUploader onImageUpload={handleImageUpload} />
             </Col>
-            <Col sm={2}>
-              <AnalyzeButton onClick={handleAnalyze} />
+            <Col sm={12}>
+              <AnalyzeButton onClick={handleAnalyze} disabled={!analysisEnabled} />
             </Col>
           </Row>
         </Container>
@@ -108,14 +112,14 @@ function App() {
             <Col><FeedbackButton text="Bad Response" onClick={() => handleFeedback('Bad Response')} /></Col> */}
             <Col>
               <div className="d-grid gap-2 mt-4">
-                <Button variant="success" size="lg" onClick={() => handleFeedback('Good Response')} disabled={!analysisAvailable}>
+                <Button variant="success" size="lg" onClick={() => handleFeedback('Good Response')} disabled={!feedbackEnabled}>
                   Good Response
                 </Button>
               </div>
             </Col>
             <Col>
               <div className="d-grid gap-2 mt-4">
-                <Button variant="danger" size="lg" onClick={() => handleFeedback('Bad Response')} disabled={!analysisAvailable}>
+                <Button variant="danger" size="lg" onClick={() => handleFeedback('Bad Response')} disabled={!feedbackEnabled}>
                   Bad Response
                 </Button>
               </div>
