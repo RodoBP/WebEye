@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import ImageUploader from './components/ImageUploader';
 import AnalyzeButton from './components/AnalyzeButton';
-import DownloadButton from './components/DownloadButton';
-import FeedbackButton from './components/FeedbackButton';
-import AnalysisOutput from './components/AnalysisOutput';
-import FeedbackResponse from './components/FeedbackResponse';
 import WebEyeAnimation from './components/WebEyeAnimation';
 import Footer from './components/Footer';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { Button, Form, FormGroup, FormLabel, FormControl } from 'react-bootstrap';
+import { Button, Form, Spinner } from 'react-bootstrap';
 import { jsPDF } from 'jspdf';
+import axios from 'axios';
+import './App.css'; // Import your CSS file
 
 function App() {
   const [image, setImage] = useState(null);
   const [analysis, setAnalysis] = useState('');
-  const [feedback, setFeedback] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(''); // Define feedback state
   const [downloadEnabled, setDownloadEnabled] = useState(false);
-  const [feedbackEnabled, setfeedbackEnabled] = useState(false);
+  const [feedbackEnabled, setFeedbackEnabled] = useState(false);
   const [analysisEnabled, setAnalysisEnabled] = useState(false);
 
   const handleImageUpload = (file) => {
@@ -26,119 +26,162 @@ function App() {
   };
 
   const handleAnalyze = () => {
-    // Lógica para analizar la imagen
-    setAnalysis('This is a sample analysis.');
+    if (image) {
+      setLoading(true);
+      setError('');
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result.split(',')[1];
+        await sendImageToOpenAI(base64Image);
+      };
+      reader.readAsDataURL(image);
+    }
+  };
+
+  const sendImageToOpenAI = async (base64Image) => {
+    const otterKey = process.env.REACT_APP_OPENAI_API_KEY;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${otterKey}`,
+    };
+
+    const payload = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Give me brief list of all web elements you see. After that, provide me with functional test cases for each of those elements. The output should have the following format strictly: Test Case, bullet point list of maximum 2 test cases.',
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 500,
+    };
+
+    try {
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', payload, { headers });
+      setAnalysis(response.data.choices[0].message.content);
+      setDownloadEnabled(true);
+      setFeedbackEnabled(true);
+    } catch (error) {
+      setError('Error sending request to OpenAI');
+      console.error('Error sending request to OpenAI', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFeedback = (response) => {
-    // setFeedback(response);
-    setFeedback('This is a sample feedback.');
+    setFeedback(response);
   };
 
   useEffect(() => {
-    if (image && !analysis && !feedback) {
+    if (image && !analysis) {
       setAnalysisEnabled(true);
     }
-    if (image && analysis && !feedback) {
-      setfeedbackEnabled(true);
-    }
-    if (image && analysis && feedback) {
-      setDownloadEnabled(true);
-    }
-  }, [image, analysis, feedback]);
+  }, [image, analysis]);
 
   const downloadTxtFile = () => {
-    const element = document.createElement("a");
+    const element = document.createElement('a');
     const file = new Blob([analysis], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = "contenido.txt";
-    document.body.appendChild(element); // Required for this to work in FireFox
+    element.download = 'contenido.txt';
+    document.body.appendChild(element); // Required for this to work in Firefox
     element.click();
   };
 
   const downloadPdfFile = () => {
     const doc = new jsPDF();
-    doc.text(analysis, 10, 10);
-    doc.save("contenido.pdf");
+    const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const maxLineWidth = pageWidth - margin * 2;
+    const lineHeight = 1.2 * doc.internal.getFontSize();
+
+    const lines = doc.splitTextToSize(analysis, maxLineWidth);
+    let cursorY = margin;
+
+    lines.forEach(line => {
+      if (cursorY + lineHeight > pageHeight - margin) {
+        doc.addPage();
+        cursorY = margin;
+      }
+      doc.text(line, margin, cursorY);
+      cursorY += lineHeight;
+    });
+
+    doc.save('contenido.pdf');
   };
 
   return (
-    <div className="container mx-auto p-4" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ flex: 1 }}>
-        {/* Logo */}
+    <div className="app-container">
+      <header className="header">
         <WebEyeAnimation />
-
-        {/* Handle Image Uploader and Analyze Button */}
-        <Container className='text-center'>
-          <Row >
-            <Col sm={12}>
-              <ImageUploader onImageUpload={handleImageUpload} />
-            </Col>
-            <Col sm={12}>
-              <AnalyzeButton onClick={handleAnalyze} disabled={!analysisEnabled} />
-            </Col>
-          </Row>
-        </Container>
-
-        {/* Analysis TextArea */}
-        <Form.Group controlId="analysis.Textarea" className='mt-4'>
-          <Form.Label>Analysis:</Form.Label>
-          <Form.Control as="textarea" readOnly value={analysis} />
-          {/* <AnalysisOutput analysis={analysis} /> */}
-        </Form.Group>
-
-        {/* Download and Feedback Buttons */}
-        <Container className='text-center'>
-          <Row>
-            {/* <Col><DownloadButton text="Download as TXT" fileType="TXT" disabled={!downloadEnabled} onClick={downloadTxtFile} /></Col>
-            <Col><DownloadButton text="Download as PDF" fileType="PDF" disabled={!downloadEnabled} onClick={downloadPdfFile} /></Col> */}
-            <Col>
-              <div className="d-grid gap-2 mt-4">
-                <Button variant="secondary" size="lg" onClick={downloadTxtFile} disabled={!downloadEnabled}>
-                  Download as TXT
-                </Button>
-              </div>
-            </Col>
-            <Col>
-              <div className="d-grid gap-2 mt-4">
-                <Button variant="secondary" size="lg" onClick={downloadPdfFile} disabled={!downloadEnabled}>
-                  Download as PDF
-                </Button>
-              </div>
-            </Col>
-          </Row>
-          <Row>
-            {/* <Col><FeedbackButton text="Good Response" onClick={() => handleFeedback('Good Response')} /></Col>
-            <Col><FeedbackButton text="Bad Response" onClick={() => handleFeedback('Bad Response')} /></Col> */}
-            <Col>
-              <div className="d-grid gap-2 mt-4">
-                <Button variant="success" size="lg" onClick={() => handleFeedback('Good Response')} disabled={!feedbackEnabled}>
-                  Good Response
-                </Button>
-              </div>
-            </Col>
-            <Col>
-              <div className="d-grid gap-2 mt-4">
-                <Button variant="danger" size="lg" onClick={() => handleFeedback('Bad Response')} disabled={!feedbackEnabled}>
-                  Bad Response
-                </Button>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-
-        {/* Feedback TextArea */}
-        <Form.Group controlId="feedback.Textarea" className='mt-4'>
-          <Form.Label>Feedback:</Form.Label>
-          <Form.Control as="textarea" readOnly value={feedback} />
-          {/* <FeedbackResponse feedback={feedback} /> */}
-        </Form.Group>
+      </header>
+      <div className="content">
+        <div className="input-area">
+          <Container className="text-center">
+            <Row>
+              <Col sm={12}>
+                <ImageUploader onImageUpload={handleImageUpload} />
+              </Col>
+              <Col sm={12}>
+                <AnalyzeButton onClick={handleAnalyze} disabled={!analysisEnabled} />
+              </Col>
+            </Row>
+          </Container>
+        </div>
+        <div className="analysis-area">
+          <Form.Group controlId="analysis.Textarea" className="mt-4">
+            <Form.Label>Analysis:</Form.Label>
+            <Form.Control as="textarea" readOnly value={loading ? 'Processing...' : error ? error : analysis} style={{ height: '55vh' }} />
+          </Form.Group>
+          <Container className="text-center">
+            <Row>
+              <Col>
+                <div className="d-grid gap-2 mt-4">
+                  <Button variant="secondary" size="lg" onClick={downloadTxtFile} disabled={!downloadEnabled}>
+                    Download as TXT
+                  </Button>
+                </div>
+              </Col>
+              <Col>
+                <div className="d-grid gap-2 mt-4">
+                  <Button variant="secondary" size="lg" onClick={downloadPdfFile} disabled={!downloadEnabled}>
+                    Download as PDF
+                  </Button>
+                </div>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <div className="d-grid gap-2 mt-4">
+                  <Button variant="success" size="lg" onClick={() => handleFeedback('Good Response')} disabled={!feedbackEnabled}>
+                    Good Response
+                  </Button>
+                </div>
+              </Col>
+              <Col>
+                <div className="d-grid gap-2 mt-4">
+                  <Button variant="danger" size="lg" onClick={() => handleFeedback('Bad Response')} disabled={!feedbackEnabled}>
+                    Bad Response
+                  </Button>
+                </div>
+              </Col>
+            </Row>
+          </Container>
+        </div>
       </div>
-
-      {/* Footer */}
-      <div>
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }
