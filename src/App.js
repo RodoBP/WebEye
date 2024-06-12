@@ -53,7 +53,7 @@ function App() {
           content: [
             {
               type: 'text',
-              text: 'Identify each element you can interact with. After that, identify the html code of each element and generate a list of test cases in JUnit format to test the functionality of each element.',
+              text: 'Identify each element you can interact with. After that, identify the html code of each element and generate a list of test cases in JUnit format to test the functionality of each element. Just show me the Junit cases.',
             },
             {
               type: 'image_url',
