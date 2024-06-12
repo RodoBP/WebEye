@@ -53,7 +53,7 @@ function App() {
           content: [
             {
               type: 'text',
-              text: 'Give me brief list of all web elements you see. After that, identify the html code of each element and generate a list of test cases in JUnit format to test the functionality of the web page.',
+              text: 'Identify each element you can interact with. After that, identify the html code of each element and generate a list of test cases in JUnit format to test the functionality of each element.',
             },
             {
               type: 'image_url',
@@ -64,7 +64,7 @@ function App() {
           ],
         },
       ],
-      max_tokens: 500,
+      max_tokens: 1000,
     };
 
     try {
