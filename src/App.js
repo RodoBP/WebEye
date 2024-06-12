@@ -53,7 +53,7 @@ function App() {
           content: [
             {
               type: 'text',
-              text: 'Give me brief list of all web elements you see. After that, provide me with functional test cases for each of those elements. The output should have the following format strictly: Test Case, bullet point list of maximum 2 test cases.',
+              text: 'Give me brief list of all web elements you see. After that, identify the html code of each element and generate a list of test cases in JUnit format to test the functionality of the web page.',
             },
             {
               type: 'image_url',
